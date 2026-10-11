@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Scanner · PhishGuard AI{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Website Scanner</h1>
+  <p class="lead">Enter a link to analyze. Adding a screenshot and page details makes the report richer.</p>
+</section>
+
+{% if error %}<div class="alert error" role="alert">{{ error }}</div>{% endif %}
+
+<form class="card form" id="scanForm" action="{{ url_for('scan') }}" method="post" enctype="multipart/form-data" novalidate>
+  <h2><span class="num">1</span> Website URL <small>required</small></h2>
+  <input type="text" name="url" id="urlInput" placeholder="https://example.com/login" value="{{ form.get('url', '') }}" autocomplete="off" spellcheck="false" maxlength="2000">
+  <p class="hint">The website is never visited or opened. Only the text of the link is analyzed.</p>
+  <p class="field-error" id="urlError" hidden></p>
+
+  <h2><span class="num">2</span> Screenshot <small>optional</small></h2>
+  <label class="drop" for="shotInput" id="dropLabel">
+    <input type="file" name="screenshot" id="shotInput" accept="image/png,image/jpeg">
+    <span id="dropText">Click to choose a PNG or JPG screenshot (max 5 MB)</span>
+  </label>
+  <img id="preview" class="preview" alt="Screenshot preview" hidden>
+  <p class="field-error" id="fileError" hidden></p>
+
+  <h2><span class="num">3</span> What did you see on the page? <small>optional</small></h2>
+  <label class="hint" for="brandSelect">Brand logo shown on the page</label>
+  <select name="brand" id="brandSelect">
+    <option value="">Not sure / no brand</option>
+    {% for key, info in brands.items() %}
+    <option value="{{ key }}" {{ 'selected' if form.get('brand') == key }}>{{ info.name }}</option>
+    {% endfor %}
+  </select>
+  <label class="hint" for="pageText">Visible page text (copy and paste a few lines)</label>
+  <textarea name="page_text" id="pageText" rows="4" maxlength="3000" placeholder="e.g. Your account is suspended. Verify your password immediately.">{{ form.get('page_text', '') }}</textarea>
+
+  <button type="submit" class="btn primary wide">Analyze &amp; Generate Report</button>
+</form>
+{% endblock %}

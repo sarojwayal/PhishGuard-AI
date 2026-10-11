@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Report {{ r.scan.id }} · PhishGuard AI{% endblock %}
+{% block content %}
+{% set cls = r.overall.category|lower %}
+
+<div class="report-tools no-print">
+  <a class="btn ghost" href="{{ url_for('scanner') }}">← New scan</a>
+  <button type="button" class="btn ghost" data-print>Print / Save as PDF</button>
+</div>
+
+<div class="alert info">
+  <b>Demonstration mode.</b> This report uses simple rules and the details you typed in. No trained machine-learning or vision-language model was used.
+</div>
+
+<h1 class="report-title">PHISHGUARD AI — SECURITY ANALYSIS REPORT</h1>
+
+<!-- 1. SCAN INFORMATION -->
+<section class="card">
+  <h2><span class="num">1</span> Scan Information</h2>
+  <dl class="kv">
+    <dt>Scan ID</dt><dd>{{ r.scan.id }}</dd>
+    <dt>Submitted URL</dt><dd class="break">{{ r.scan.url }}{% if r.scan.scheme_assumed %} <span class="muted">(https:// was assumed)</span>{% endif %}</dd>
+    <dt>Date and time</dt><dd>{{ r.scan.created }}</dd>
+    <dt>Analysis status</dt><dd>{{ r.scan.status }}</dd>
+    <dt>Analysis mode</dt><dd>{{ r.scan.mode }}</dd>
+  </dl>
+</section>
+
+<!-- 2. OVERALL ASSESSMENT -->
+<section class="card">
+  <h2><span class="num">2</span> Overall Assessment</h2>
+  <div class="overall">
+    <div class="gauge-wrap">
+      <svg viewBox="0 0 100 100" class="gauge risk-{{ cls }}" role="img" aria-label="Risk score {{ r.overall.score }} out of 100">
+        <circle cx="50" cy="50" r="40" class="gauge-bg"/>
+        <circle cx="50" cy="50" r="40" class="gauge-fg" stroke-dasharray="{{ (r.overall.score / 100 * 251.2)|round(1) }} 251.2" transform="rotate(-90 50 50)"/>
+        <text x="50" y="52" text-anchor="middle" class="gauge-num">{{ r.overall.score }}</text>
+        <text x="50" y="66" text-anchor="middle" class="gauge-sub">out of 100</text>
+      </svg>
+    </div>
+    <div class="overall-text">
+      <span class="badge risk-{{ cls }}">{{ r.overall.category }} risk</span>
+      <p class="summary">{{ r.overall.summary }}</p>
+      <dl class="kv">
+        <dt>Risk score</dt><dd>{{ r.overall.score }} / 100</dd>
+        <dt>Model confidence</dt><dd>{{ r.overall.confidence }}</dd>
+      </dl>
+    </div>
+  </div>
+  <h3>Summary of the evidence</h3>
+  <ul class="list">
+    {% for reason in r.overall.reasons %}<li>{{ reason }}</li>{% endfor %}
+  </ul>
+</section>
+
+<!-- 3. URL ANALYSIS -->
+<section class="card">
+  <h2><span class="num">3</span> URL Analysis</h2>
+  <h3>URL characteristics</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Characteristic</th><th>Value</th><th>Result</th><th class="num-col">Points</th></tr></thead>
+      <tbody>
+      {% for f in r.url_analysis.features %}
+        <tr>
+          <td>{{ f.label }}</td>
+          <td>{{ f.value }}</td>
+          <td><span class="tag {{ 'warn' if f.flagged else 'ok' }}">{{ 'Suspicious' if f.flagged else 'Normal' }}</span></td>
+          <td class="num-col">{{ '+' ~ f.points if f.points else '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Domain-related findings</h3>
+  <dl class="kv">
+    <dt>Host name</dt><dd class="break">{{ r.url_analysis.host }}</dd>
+    <dt>Main domain</dt><dd>{{ r.url_analysis.registrable }}</dd>
+    <dt>Domain age and owner</dt><dd class="muted">Not checked in this version (requires an internet lookup such as WHOIS).</dd>
+  </dl>
+
+  <h3>Suspicious patterns detected</h3>
+  {% if r.url_analysis.suspicious %}
+  <ul class="list warn">
+    {% for f in r.url_analysis.suspicious %}<li><b>{{ f.label }}:</b> {{ f.note }}</li>{% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No suspicious URL patterns were detected.</p>
+  {% endif %}
+</section>
+
+<!-- 4. VISUAL ANALYSIS -->
+<section class="card">
+  <h2><span class="num">4</span> Visual Analysis</h2>
+  {% if r.visual.submitted %}
+  <div class="visual">
+    <img class="shot" src="{{ url_for('uploads', filename=r.visual.filename) }}" alt="Uploaded website screenshot">
+    <div>
+      <h3>Screenshot details</h3>
+      <dl class="kv">
+        <dt>Format</dt><dd>{{ r.visual.info.format }}</dd>
+        <dt>Dimensions</dt><dd>{{ r.visual.info.width }} × {{ r.visual.info.height }} pixels</dd>
+        <dt>File size</dt><dd>{{ r.visual.info.size_kb }} KB</dd>
+        <dt>Brightness</dt><dd>{{ r.visual.info.brightness }} / 255</dd>
+      </dl>
+      <h3>Dominant colours</h3>
+      <div class="swatches">
+        {% for c in r.visual.info.colors %}
+        <div class="swatch"><span style="background: {{ c.hex }}"></span>{{ c.hex }} · {{ c.percent }}%</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <h3>Image observations</h3>
+  <ul class="list">{% for o in r.visual.info.observations %}<li>{{ o }}</li>{% endfor %}</ul>
+  {% else %}
+  <p class="muted">No screenshot was submitted, so no visual analysis was performed.</p>
+  {% endif %}
+
+  <h3>Suspicious visual elements</h3>
+  <p class="note-box">
+    {% if r.visual.vlm_connected %}A vision-language model analysed this screenshot.
+    {% else %}Automatic detection of logos, login forms and copied page layouts needs a vision-language model, which is <b>not connected</b> in this version. No suspicious visual elements were detected automatically.{% endif %}
+  </p>
+
+  <h3>Potential brand impersonation indicators</h3>
+  <ul class="list">{% for b in r.visual.brand_indicators %}<li>{{ b }}</li>{% endfor %}</ul>
+</section>
+
+<!-- 5. VISION-LANGUAGE FINDINGS -->
+<section class="card">
+  <h2><span class="num">5</span> Vision-Language Findings</h2>
+  <h3>Textual and visual evidence</h3>
+  {% if r.vl.findings %}
+  <ul class="list">
+    {% for f in r.vl.findings %}<li class="{{ f.level }}">{{ f.text }}</li>{% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No brand or page text was supplied, so there was nothing to compare with the URL.</p>
+  {% endif %}
+
+  <h3>Relationships and inconsistencies</h3>
+  <p class="muted">
+    {% if r.vl.context_given %}The checks above compare what you saw on the page with the website address.
+    {% else %}Add the brand logo and page text on the scanner page to enable these cross-checks.{% endif %}
+  </p>
+
+  <h3>Limitations of the analysis</h3>
+  <ul class="list">{% for l in r.vl.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+</section>
+
+<!-- 6. FINAL ASSESSMENT -->
+<section class="card">
+  <h2><span class="num">6</span> Final Assessment</h2>
+  <p><b>Combined result:</b> <span class="badge risk-{{ cls }}">{{ r.final.category }} risk</span> &nbsp; Score {{ r.final.score }} / 100</p>
+  <h3>How the score was built</h3>
+  {% if r.final.breakdown %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Source</th><th>Indicator</th><th class="num-col">Points</th></tr></thead>
+      <tbody>
+        {% for b in r.final.breakdown %}<tr><td>{{ b.source }}</td><td>{{ b.label }}</td><td class="num-col">+{{ b.points }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">No risk points were added.</p>
+  {% endif %}
+  <h3>Main reasons behind the classification</h3>
+  <ul class="list">{% for reason in r.final.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+  <h3>Recommended precautions</h3>
+  <ul class="list">{% for p in r.final.precautions %}<li>{{ p }}</li>{% endfor %}</ul>
+</section>
+
+<!-- 7. SAFETY RECOMMENDATIONS -->
+<section class="card">
+  <h2><span class="num">7</span> Safety Recommendations</h2>
+  <ul class="list">{% for s in r.recommendations %}<li>{{ s }}</li>{% endfor %}</ul>
+  <p class="note-box">PhishGuard AI can never confirm that a website is completely safe. Treat every result as guidance, not a guarantee.</p>
+</section>
+{% endblock %}

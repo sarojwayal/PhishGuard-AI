@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <span class="pill">Multimodal phishing detection · Demo</span>
+  <h1>Don't Trust Every Link.<br><span class="grad">Verify It With AI.</span></h1>
+  <p class="lead">PhishGuard AI studies a website's address, its screenshot and the wording on the page, then checks whether they agree. You get a clear risk level and a detailed security report.</p>
+  <div class="hero-actions">
+    <a class="btn primary" href="{{ url_for('scanner') }}">Scan a Website</a>
+    <a class="btn ghost" href="{{ url_for('about') }}">About the project</a>
+  </div>
+</section>
+
+<section class="grid3">
+  <article class="card feature">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+    </div>
+    <h3>URL Analysis</h3>
+    <p>Checks the link for tricks such as fake brand names, look-alike characters, odd domains and hidden redirects. The site is never opened.</p>
+  </article>
+  <article class="card feature">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="m3 15 5-5 4 4 3-3 6 6M8 9h.01"/></svg>
+    </div>
+    <h3>Visual Analysis</h3>
+    <p>Upload a screenshot of the page. Look-alike logos and fake login screens are a key clue that a link alone cannot show.</p>
+  </article>
+  <article class="card feature">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v1a4 4 0 0 0-3 3.9A4 4 0 0 0 8 16v1a4 4 0 0 0 8 0v-1a4 4 0 0 0 3-4.1A4 4 0 0 0 16 8V7a4 4 0 0 0-4-4zM12 3v18"/></svg>
+    </div>
+    <h3>AI-Powered Detection</h3>
+    <p>Combines the signals to find mismatches, for example a page that shows a bank's logo on an unrelated domain.</p>
+  </article>
+</section>
+
+<section class="steps">
+  <h2>How it works</h2>
+  <ol class="grid3">
+    <li class="card"><b>1</b><h3>Submit</h3><p>Enter a URL and, optionally, add a screenshot and what you see on the page.</p></li>
+    <li class="card"><b>2</b><h3>Analyze</h3><p>The system studies each signal and compares them with each other.</p></li>
+    <li class="card"><b>3</b><h3>Read the report</h3><p>See the risk level, the evidence behind it and what to do next.</p></li>
+  </ol>
+</section>
+{% endblock %}

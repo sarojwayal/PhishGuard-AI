@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · PhishGuard AI{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Dashboard</h1>
+  <p class="lead">A summary of every scan made on this computer.</p>
+</section>
+
+<section class="kpis">
+  <div class="card kpi"><span>Total scans</span><b>{{ stats.total }}</b></div>
+  <div class="card kpi"><span>High risk</span><b class="c-high">{{ stats.counts.High }}</b></div>
+  <div class="card kpi"><span>Medium risk</span><b class="c-medium">{{ stats.counts.Medium }}</b></div>
+  <div class="card kpi"><span>Low risk</span><b class="c-low">{{ stats.counts.Low }}</b></div>
+  <div class="card kpi"><span>Average score</span><b>{{ stats.average }}</b></div>
+</section>
+
+{% if stats.total %}
+<section class="grid2">
+  <div class="card">
+    <h3>Results by risk level</h3>
+    <div class="chart-box"><canvas id="catChart" data-values='{{ [stats.counts.Low, stats.counts.Medium, stats.counts.High]|tojson }}'></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Risk score of recent scans</h3>
+    <div class="chart-box"><canvas id="scoreChart" data-labels='{{ stats.chart_labels|tojson }}' data-values='{{ stats.chart_scores|tojson }}'></canvas></div>
+  </div>
+</section>
+<p class="muted chart-fallback" id="chartFallback" hidden>Charts need an internet connection to load Chart.js. The numbers above are still correct.</p>
+
+<section class="card">
+  <h3>Recent scans</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Scan ID</th><th>URL</th><th>Date</th><th class="num-col">Score</th><th>Risk</th></tr></thead>
+      <tbody>
+        {% for s in recent %}
+        <tr>
+          <td><a href="{{ url_for('report', scan_id=s.id) }}">{{ s.id }}</a></td>
+          <td class="break url-cell">{{ s.url }}</td>
+          <td>{{ s.created }}</td>
+          <td class="num-col">{{ s.score }}</td>
+          <td><span class="badge small risk-{{ s.category|lower }}">{{ s.category }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% else %}
+<section class="card empty">
+  <h3>No scans yet</h3>
+  <p class="muted">Run your first scan and the results will appear here.</p>
+  <a class="btn primary" href="{{ url_for('scanner') }}">Scan a Website</a>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if stats.total %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endif %}
+{% endblock %}
